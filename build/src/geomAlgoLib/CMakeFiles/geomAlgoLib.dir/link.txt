@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgeomAlgoLib.a CMakeFiles/geomAlgoLib.dir/example.cpp.o CMakeFiles/geomAlgoLib.dir/io.cpp.o CMakeFiles/geomAlgoLib.dir/measures.cpp.o
+/usr/bin/ranlib libgeomAlgoLib.a
