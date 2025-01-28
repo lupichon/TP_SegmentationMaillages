@@ -10,5 +10,6 @@ namespace geomAlgoLib
 {
     Facet_double_map computeArea(const Polyhedron & mesh);
     void computeOFFFile(const Polyhedron & mesh, const Facet_double_map & faces, const std::string & filenameOFF);
+    Facet_double_map computeSmallestAngle(const Polyhedron & mesh);
+    Facet_doubleTab_map computeAngleNormalAxes(const Polyhedron & mesh);
 }
-

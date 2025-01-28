@@ -17,6 +17,7 @@ using Halfedge_iterator = Polyhedron::Halfedge_const_iterator;
 using Halfedge_facet_circulator = Polyhedron::Halfedge_around_facet_const_circulator;
 
 using Facet_double_map = std::map<Polyhedron::Facet_const_handle, double>;
+using Facet_doubleTab_map = std::map<Polyhedron::Facet_const_handle, std::array<double, 3>>;
 using Facet_int_map = std::map<Polyhedron::Facet_const_handle, int>;
 
 }
