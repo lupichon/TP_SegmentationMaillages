@@ -107,7 +107,7 @@ namespace geomAlgoLib
                 Kernel::Vector_3 edge1 = h->vertex()->point() - h->opposite()->vertex()->point();  
                 Kernel::Vector_3 edge2 = h->next()->vertex()->point() - h->opposite()->vertex()->point(); 
 
-                double angle = std::acos(edge1 * edge2 / (std::sqrt(edge1 * edge1) * std::sqrt(edge2 * edge2))) * 180/M_PI;  
+                double angle = std::acos(edge1 * edge2 / (std::sqrt(edge1 * edge1) * std::sqrt(edge2 * edge2))) * 180/M_PI; 
                 smallest_angle = std::min(smallest_angle, angle);
 
                 ++h;  
@@ -119,10 +119,8 @@ namespace geomAlgoLib
         return angles;
     }
 
-    Facet_doubleTab_map computeAngleNormalAxes(const Polyhedron & mesh)
+    void computeAngleNormalAxes(const Polyhedron & mesh, Facet_double_map & anglesNormalX, Facet_double_map & anglesNormalY, Facet_double_map & anglesNormalZ)
     {
-        Facet_doubleTab_map angles;
-
         Kernel::Vector_3 X_axis(1,0,0);
         Kernel::Vector_3 Y_axis(0,1,0);
         Kernel::Vector_3 Z_axis(0,0,1);
@@ -137,16 +135,73 @@ namespace geomAlgoLib
 
             
             auto computeAngle = [](const Kernel::Vector_3 & v1, const Kernel::Vector_3 & v2) -> double {
-                return v1*v2/(std::sqrt(v1*v1)*std::sqrt(v2*v2)) * 180/M_PI ;
+                return std::acos(v1*v2/(std::sqrt(v1*v1)*std::sqrt(v2*v2))) * 180/M_PI ;
             };
-
-            double angleX = computeAngle(normal, X_axis);
-            double angleY = computeAngle(normal, Y_axis);
-            double angleZ = computeAngle(normal, Z_axis);
             
-            angles.insert(std::make_pair(i, std::array<double, 3>{angleX, angleY, angleZ}));
+            anglesNormalX.insert({i, computeAngle(normal, X_axis)});
+            anglesNormalY.insert({i, computeAngle(normal, Y_axis)});
+            anglesNormalZ.insert({i, computeAngle(normal, Z_axis)});
+        }
+    }
+
+    Facet_string_map computeSegmentation(const Facet_double_map & measures, float treshold, std::string class1, std::string class2)
+    {
+        Facet_string_map segmentation; 
+
+        for(const auto & measure : measures)
+        {
+            if(abs(measure.second) > treshold)
+            {
+                segmentation.insert({measure.first, class1});
+            }
+            else
+            {
+                segmentation.insert({measure.first, class2});
+            }
+        }
+        return segmentation;
+    }
+
+    void computeColoredMesh(const Polyhedron & mesh, const Facet_string_map & segmentationMap, const std::string & filenameOFF, CGAL::Color color1, CGAL::Color color2, std::string class1, std::string class2)
+    {
+        std::ofstream in_myfile;
+        in_myfile.open(filenameOFF);
+
+        CGAL::set_ascii_mode(in_myfile);
+
+        in_myfile << "COFF" << std::endl << mesh.size_of_vertices() << ' ' << mesh.size_of_facets() << " 0" << std::endl; 
+
+        std::copy(mesh.points_begin(), mesh.points_end(),
+                std::ostream_iterator<Kernel::Point_3>(in_myfile, "\n"));
+
+        for (Facet_iterator i = mesh.facets_begin(); i != mesh.facets_end(); ++i)
+        {
+            Halfedge_facet_circulator j = i->facet_begin();
+
+            CGAL_assertion(CGAL::circulator_size(j) >= 3);
+
+            in_myfile << CGAL::circulator_size(j) << ' ';
+            do
+            {
+                in_myfile << ' ' << std::distance(mesh.vertices_begin(), j->vertex());
+
+            } while (++j != i->facet_begin());
+
+            if(segmentationMap.at(i) == class1)
+            {
+                in_myfile << std::fixed << std::setprecision(1) << ' ' << color1;
+            }
+            else
+            {
+                in_myfile << std::fixed << std::setprecision(1) << ' ' << color2;
+            }
+
+            in_myfile << std::endl;
         }
 
-        return angles;
+        in_myfile.close();
+
+        std::cout << "Segmentation mesh successfully exported at path: " << filenameOFF << " !" << std::endl;
     }
 }
+
