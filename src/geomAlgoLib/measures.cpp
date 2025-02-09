@@ -144,13 +144,69 @@ namespace geomAlgoLib
         }
     }
 
+    Facet_double_map computeAltitudes(const Polyhedron & mesh)
+    {
+        Facet_double_map altitudes;
+
+        for (Facet_iterator i = mesh.facets_begin(); i != mesh.facets_end(); ++i) 
+        {
+            CGAL::Point_3 p1 = i->facet_begin()->vertex()->point();
+            CGAL::Point_3 p2 = i->facet_begin()->opposite()->vertex()->point();
+            CGAL::Point_3 p3 = i->facet_begin()->next()->vertex()->point();
+
+            double altitude = (p1.z() + p2.z() + p3.z())/3.0;
+
+            altitudes.insert({i, altitude});
+        }
+        return altitudes;
+    }
+
+    Facet_double_map computeRoughness(const Polyhedron & mesh)
+    {
+        Facet_double_map roughness;
+
+        Facet_iterator i = mesh.facets_begin();
+
+        CGAL::Point_3 p1 = i->facet_begin()->vertex()->point();
+        CGAL::Point_3 p2 = i->facet_begin()->next()->vertex()->point();
+        CGAL::Point_3 p3 = i->facet_begin()->next()->next()->vertex()->point();
+        CGAL::Vector_3 normal1 = CGAL::normal(p1, p2, p3);
+
+        for (; std::next(i) != mesh.facets_end(); ++i)
+        {
+            Facet_iterator next_face = std::next(i);
+
+            p1 = next_face->facet_begin()->vertex()->point();
+            p2 = next_face->facet_begin()->next()->vertex()->point();
+            p3 = next_face->facet_begin()->next()->next()->vertex()->point();
+            CGAL::Vector_3 normal2 = CGAL::normal(p1, p2, p3);
+
+            double angle = std::acos(CGAL::scalar_product(normal1, normal2) /(std::sqrt(normal1.squared_length()) * std::sqrt(normal2.squared_length()))) * 180 / M_PI;
+
+            roughness.insert({i, angle});
+
+            normal1 = normal2;
+        }
+
+        auto last = std::prev(mesh.facets_end());
+        p1 = last->facet_begin()->vertex()->point();
+        p2 = last->facet_begin()->next()->vertex()->point();
+        p3 = last->facet_begin()->next()->next()->vertex()->point();
+        CGAL::Vector_3 normal2 = CGAL::normal(p1, p2, p3);
+
+        roughness.insert({last, 0});
+
+        return roughness;
+    }
+
+
     Facet_string_map computeSegmentation(const Facet_double_map & measures, float treshold, std::string class1, std::string class2)
     {
         Facet_string_map segmentation; 
 
         for(const auto & measure : measures)
         {
-            if(abs(measure.second) > treshold)
+            if(measure.second > treshold)
             {
                 segmentation.insert({measure.first, class1});
             }
@@ -162,7 +218,7 @@ namespace geomAlgoLib
         return segmentation;
     }
 
-    void computeColoredMesh(const Polyhedron & mesh, const Facet_string_map & segmentationMap, const std::string & filenameOFF, CGAL::Color color1, CGAL::Color color2, std::string class1, std::string class2)
+    void computeColoredMesh(const Polyhedron & mesh, const Facet_string_map & segmentationMap, const std::string & filenameOFF, const Color & color1, const Color & color2, std::string class1, std::string class2)
     {
         std::ofstream in_myfile;
         in_myfile.open(filenameOFF);
@@ -189,11 +245,11 @@ namespace geomAlgoLib
 
             if(segmentationMap.at(i) == class1)
             {
-                in_myfile << std::fixed << std::setprecision(1) << ' ' << color1;
+                in_myfile << std::fixed << std::setprecision(1) << ' ' << color1[0] << ' ' << color1[1] << ' ' << color1[2];
             }
             else
             {
-                in_myfile << std::fixed << std::setprecision(1) << ' ' << color2;
+                in_myfile << std::fixed << std::setprecision(1) << ' ' << color2[0] << ' ' << color2[1] << ' ' << color2[2];
             }
 
             in_myfile << std::endl;
@@ -202,6 +258,60 @@ namespace geomAlgoLib
         in_myfile.close();
 
         std::cout << "Segmentation mesh successfully exported at path: " << filenameOFF << " !" << std::endl;
+    }
+
+    void computeColoredMeshMultiClass(const Polyhedron & mesh, const Facet_string_multimap & segmentationMultimap, const std::string & filenameOFF, const std::vector<Color> & colors, const std::vector<std::string> & classes)
+    {
+        std::ofstream in_myfile;
+        in_myfile.open(filenameOFF);
+
+        CGAL::set_ascii_mode(in_myfile);
+
+        in_myfile << "COFF" << std::endl << mesh.size_of_vertices() << ' ' << mesh.size_of_facets() << " 0" << std::endl; 
+
+        std::copy(mesh.points_begin(), mesh.points_end(),
+                std::ostream_iterator<Kernel::Point_3>(in_myfile, "\n"));
+
+        for (Facet_iterator i = mesh.facets_begin(); i != mesh.facets_end(); ++i)
+        {
+            Halfedge_facet_circulator j = i->facet_begin();
+
+            CGAL_assertion(CGAL::circulator_size(j) >= 3);
+
+            in_myfile << CGAL::circulator_size(j) << ' ';
+            do
+            {
+                in_myfile << ' ' << std::distance(mesh.vertices_begin(), j->vertex());
+
+            } while (++j != i->facet_begin());
+
+
+            auto values = segmentationMultimap.equal_range(i);
+            float r=0, g=0, b=0;
+            
+            for (auto it = values.first; it != values.second; ++it) 
+            {
+                auto val = std::find(classes.begin(), classes.end(), it->second);
+
+                if(val != classes.end())
+                {
+                    int index = std::distance(classes.begin(), val);
+                    r += colors[index][0];
+                    g += colors[index][1];
+                    b += colors[index][2];
+                }
+            }
+            r /= (classes.size()/4);
+            g /= (classes.size()/4);
+            b /= (classes.size()/4);
+            in_myfile << std::fixed << std::setprecision(1) << ' ' << r << ' ' << g << ' ' << b;
+
+            in_myfile << std::endl;
+        }
+
+        in_myfile.close();
+
+        std::cout << "Segmentation mesh multiclass successfully exported at path: " << filenameOFF << " !" << std::endl;
     }
 }
 

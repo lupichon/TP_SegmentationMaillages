@@ -19,4 +19,7 @@ using Halfedge_facet_circulator = Polyhedron::Halfedge_around_facet_const_circul
 using Facet_double_map = std::map<Polyhedron::Facet_const_handle, double>;
 using Facet_int_map = std::map<Polyhedron::Facet_const_handle, int>;
 using Facet_string_map = std::map<Polyhedron::Facet_const_handle, std::string>;
+using Facet_string_multimap = std::multimap<Polyhedron::Facet_const_handle, std::string>;
+
+using Color = std::array<float, 3>;
 }
