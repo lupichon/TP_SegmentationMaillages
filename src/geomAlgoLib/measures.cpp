@@ -1,9 +1,36 @@
-#include "measures.hpp"
+/**
+ * @file measure.cpp
+ * 
+ * This file contains the implementation of functions for mesh segmentation.
+ * 
+ * Functions include:
+ * - computeArea: Calculates the area of each face.
+ * - computeSmallestAngle: Computes the smallest angle between adjacent edges of each face.
+ * - computeAngleNormalAxes: Computes the angles between the face normals and the X, Y, and Z axes.
+ * - computeAltitudes: Computes the average altitude (Z-coordinate) of each face.
+ * - computeRoughness: Computes the roughness of each facet based on the angle between adjacent facets.
+ * - computeOFFFile: Exports the mesh to an OFF file with face properties such as area, with colors for visualization.
+ * - computeSegmentation: Segments the mesh into distinct regions based on geometric properties or clustering.
+ * - computeColoredMesh: Colors the mesh based on computed properties, like area or roughness, for better visualization.
+ * - computeColoredMeshMultiClass: Applies multi-class color segmentation to the mesh, categorizing faces into multiple classes.
+ */
 
+#include "measures.hpp"
 
 namespace geomAlgoLib
 {
-
+    /**
+     * @brief Calculates the area of each face in a mesh.
+     * 
+     * This function iterates over each face in the mesh and computes its area. If the face is a triangle, the area is 
+     * calculated using the `squared_area` function from CGAL. If the face has more than three points, it is treated as a 
+     * non-triangular polygon, and its area is computed by dividing the face into triangles using the first point as a 
+     * reference and iterating over the other points in the face.
+     * 
+     * @param mesh The 3D mesh for which the areas of the faces are to be calculated.
+     * 
+     * @return Facet_double_map A map associating each face in the mesh to its calculated area.
+     */
     Facet_double_map computeArea(const Polyhedron & mesh)
     {
         Facet_double_map areas;
@@ -38,6 +65,21 @@ namespace geomAlgoLib
         return areas;
     }
 
+    /**
+     * @brief Exports a mesh to an OFF file with colors corresponding to face properties.
+     * 
+     * This function exports a 3D mesh to an OFF file format. It iterates over the faces of the mesh and associates a color 
+     * with each face based on a property (e.g., area), normalizing the property value to a color scale. The face property 
+     * values (such as area) are provided via a map, and the faces are colored according to their respective values, with 
+     * the minimum and maximum face property values used for scaling the color.
+     * 
+     * The resulting OFF file includes the vertices of the mesh followed by the facets, each facet having its associated color.
+     * 
+     * @param mesh The 3D mesh to be exported.
+     * @param faces A map associating each face of the mesh with a calculated property (e.g., area).
+     * @param filenameOFF The name of the output OFF file where the mesh and its properties will be saved.
+     * 
+     */
     void computeOFFFile(const Polyhedron & mesh, const Facet_double_map & faces, const std::string & filenameOFF)
     {
         std::ofstream in_myfile;
@@ -93,7 +135,21 @@ namespace geomAlgoLib
         std::cout << "Colored mesh successfully exported at path: " << filenameOFF << " !" << std::endl;
     }
 
-
+    /**
+     * @brief Computes the smallest angle between two adjacent edges for each face in the mesh.
+     * 
+     * This function calculates the smallest angle formed between any two adjacent edges for each face in the polyhedron. 
+     * It iterates over all faces, calculates the angle between consecutive edges using the dot product, and keeps track 
+     * of the smallest angle for each face.
+     * 
+     * The function uses the formula for the angle between two vectors, based on the dot product and vector magnitudes, 
+     * to compute the angle between adjacent edges. The smallest angle is selected and stored for each face.
+     * 
+     * @param mesh The 3D polyhedron mesh for which the smallest angles between adjacent edges will be computed.
+     * @return A map associating each face in the mesh with its smallest angle between two adjacent edges.
+     * 
+     * @note This function assumes that the faces are non-degenerate and are composed of at least two adjacent edges.
+     */
     Facet_double_map computeSmallestAngle(const Polyhedron &mesh)
     {
         Facet_double_map angles;
@@ -119,6 +175,21 @@ namespace geomAlgoLib
         return angles;
     }
 
+    /**
+     * @brief Computes the angle between the normal of each face and the X, Y, and Z axes.
+     * 
+     * This function calculates the angle between the normal vector of each face in the polyhedron mesh 
+     * and the X, Y, and Z axes. It iterates through all the faces, computes the normal vector of each face, 
+     * and then calculates the angle between the normal and each of the three coordinate axes (X, Y, and Z).
+     * The result is returned in degrees.
+     * 
+     * @param mesh The 3D polyhedron mesh for which the angles between face normals and the coordinate axes are computed.
+     * @param anglesNormalX A map where the key is a facet and the value is the angle between the normal and the X axis.
+     * @param anglesNormalY A map where the key is a facet and the value is the angle between the normal and the Y axis.
+     * @param anglesNormalZ A map where the key is a facet and the value is the angle between the normal and the Z axis.
+     * 
+     * @note This function computes the angles for each face using the normal vector defined by three vertices of the face.
+     */
     void computeAngleNormalAxes(const Polyhedron & mesh, Facet_double_map & anglesNormalX, Facet_double_map & anglesNormalY, Facet_double_map & anglesNormalZ)
     {
         Kernel::Vector_3 X_axis(1,0,0);
@@ -144,23 +215,64 @@ namespace geomAlgoLib
         }
     }
 
+
+    /**
+     * @brief Computes the average altitude (Z-coordinate) of each face in the polyhedron mesh.
+     * 
+     * This function calculates the average altitude of the vertices that define each face in the polyhedron mesh.
+     * It iterates over all the faces and computes the average Z-coordinate (altitude) of the vertices for each face.
+     * The altitude for each face is the mean of the Z-coordinates of the vertices that make up the face.
+     * 
+     * @param mesh The 3D polyhedron mesh for which the altitudes of the faces are computed.
+     * @return A map where the key is a facet (face) and the value is the average altitude (Z-coordinate) of the face.
+     * 
+     */
     Facet_double_map computeAltitudes(const Polyhedron & mesh)
     {
         Facet_double_map altitudes;
 
         for (Facet_iterator i = mesh.facets_begin(); i != mesh.facets_end(); ++i) 
         {
-            CGAL::Point_3 p1 = i->facet_begin()->vertex()->point();
-            CGAL::Point_3 p2 = i->facet_begin()->opposite()->vertex()->point();
-            CGAL::Point_3 p3 = i->facet_begin()->next()->vertex()->point();
+            double altitude_sum = 0.0;
+            int vertex_count = 0;
 
-            double altitude = (p1.z() + p2.z() + p3.z())/3.0;
+            Halfedge_facet_circulator h = i->facet_begin();
+            Halfedge_facet_circulator end = h;
+            
+            do 
+            {
+                CGAL::Point_3 p = h->vertex()->point();
+                altitude_sum += p.z();  
+                ++vertex_count;
+                ++h;
+            } while (h != end);
+
+            double altitude = altitude_sum / vertex_count;
 
             altitudes.insert({i, altitude});
         }
+
         return altitudes;
     }
 
+
+    /**
+     * @brief Computes the roughness of each facet in the polyhedron mesh based on the angle between adjacent facets.
+     * 
+     * This function calculates the roughness of each facet in the polyhedron mesh by measuring the angle between 
+     * the normal vectors of adjacent facets. The angle between two adjacent facets is determined using the 
+     * scalar product of their normal vectors. The roughness value is the angle between adjacent facets, 
+     * which represents how much the adjacent faces differ in orientation.
+     * 
+     * The roughness for each facet is computed as the angle (in degrees) between its normal vector and the 
+     * normal vector of the next adjacent facet in the mesh. If two facets are nearly aligned, the roughness 
+     * will be small; if the facets are oriented differently, the roughness will be larger.
+     * 
+     * @param mesh The polyhedron mesh for which the roughness of each facet is computed.
+     * @return A map where the key is a facet (face) and the value is the roughness of that facet in degrees.
+     * 
+     * @note The roughness between the first and last facets in the mesh is set to zero.
+     */
     Facet_double_map computeRoughness(const Polyhedron & mesh)
     {
         Facet_double_map roughness;
@@ -200,6 +312,20 @@ namespace geomAlgoLib
     }
 
 
+    /**
+     * @brief Computes the segmentation of the facets in the polyhedron mesh based on a threshold value.
+     * 
+     * This function segments the facets of a polyhedron mesh into two classes based on a given threshold value.
+     * Each facet is classified into one of two classes depending on whether its associated measure exceeds the threshold.
+     * The function uses the provided `class1` and `class2` names to label the facets accordingly.
+     * 
+     * @param measures A map where each facet is associated with a measure value (e.g., area, angle, roughness, etc.).
+     * @param treshold The threshold value used to classify the facets into one of two classes.
+     * @param class1 The label to assign to facets whose measure exceeds the threshold.
+     * @param class2 The label to assign to facets whose measure does not exceed the threshold.
+     * @return A map where each facet is associated with a class label (`class1` or `class2`) based on the threshold comparison.
+     * 
+     */
     Facet_string_map computeSegmentation(const Facet_double_map & measures, float treshold, std::string class1, std::string class2)
     {
         Facet_string_map segmentation; 
@@ -218,6 +344,23 @@ namespace geomAlgoLib
         return segmentation;
     }
 
+    /**
+     * @brief Computes and exports a colored mesh to an OFF file based on segmentation.
+     * 
+     * This function generates an OFF file representation of the polyhedron mesh, where each facet is colored
+     * according to its assigned class from a segmentation map. Two colors are provided, and facets are colored 
+     * based on whether they belong to `class1` or `class2`. The output mesh is saved in an OFF file format, 
+     * with color information embedded for visualization.
+     * 
+     * @param mesh The polyhedron mesh to be processed.
+     * @param segmentationMap A map that associates each facet with its corresponding class label (`class1` or `class2`).
+     * @param filenameOFF The path to the output OFF file where the colored mesh will be saved.
+     * @param color1 The RGB color to assign to facets belonging to `class1`.
+     * @param color2 The RGB color to assign to facets belonging to `class2`.
+     * @param class1 The label used for the first class of facets.
+     * @param class2 The label used for the second class of facets.
+     * 
+     */
     void computeColoredMesh(const Polyhedron & mesh, const Facet_string_map & segmentationMap, const std::string & filenameOFF, const Color & color1, const Color & color2, std::string class1, std::string class2)
     {
         std::ofstream in_myfile;
@@ -260,6 +403,21 @@ namespace geomAlgoLib
         std::cout << "Segmentation mesh successfully exported at path: " << filenameOFF << " !" << std::endl;
     }
 
+    /**
+     * @brief Computes and exports a multi-class colored mesh to an OFF file based on segmentation.
+     * 
+     * This function generates an OFF file representation of the polyhedron mesh, where each facet is colored
+     * based on its associated class from a multi-class segmentation map. Multiple classes and their corresponding
+     * colors are provided, and each facet can belong to one or more classes. The colors for each facet are averaged 
+     * if it belongs to multiple classes. The output mesh is saved in an OFF file format with color information.
+     * 
+     * @param mesh The polyhedron mesh to be processed.
+     * @param segmentationMultimap A multimap that associates each facet with one or more class labels.
+     * @param filenameOFF The path to the output OFF file where the colored mesh will be saved.
+     * @param colors A vector containing RGB color values for each class.
+     * @param classes A vector containing the class labels.
+     * 
+     */
     void computeColoredMeshMultiClass(const Polyhedron & mesh, const Facet_string_multimap & segmentationMultimap, const std::string & filenameOFF, const std::vector<Color> & colors, const std::vector<std::string> & classes)
     {
         std::ofstream in_myfile;
@@ -314,4 +472,3 @@ namespace geomAlgoLib
         std::cout << "Segmentation mesh multiclass successfully exported at path: " << filenameOFF << " !" << std::endl;
     }
 }
-
