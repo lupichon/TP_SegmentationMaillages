@@ -1,4 +1,4 @@
-# Install script for directory: /home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages/src
+# Install script for directory: /home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages/build/src/geomAlgoLib/cmake_install.cmake")
+  include("/home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages/build/src/geomAlgoLib/cmake_install.cmake")
 
 endif()
 

@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/geomAlgoLib.dir/io.cpp.o.d"
   "CMakeFiles/geomAlgoLib.dir/measures.cpp.o"
   "CMakeFiles/geomAlgoLib.dir/measures.cpp.o.d"
+  "CMakeFiles/geomAlgoLib.dir/smoothing.cpp.o"
+  "CMakeFiles/geomAlgoLib.dir/smoothing.cpp.o.d"
   "libgeomAlgoLib.a"
   "libgeomAlgoLib.pdb"
 )

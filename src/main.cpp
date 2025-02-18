@@ -2,6 +2,7 @@
 #include <example.hpp>
 #include <measures.hpp>
 #include <colors.hpp>
+#include <smoothing.hpp>
 
 #include <iostream>
 #include <string>
@@ -94,9 +95,16 @@ int main(int argc, char *argv[]){
 
     // Generate a colored mesh for the multi-class segmentation and save it to a file
     geomAlgoLib::computeColoredMeshMultiClass(myMesh, allSegmentations, "../data/allSegmentations.off", colors, classNames);
-
+    
     // Write the final mesh (after processing) to an output file
     geomAlgoLib::writeOFF(myMesh,"output.off");
+
+    // Smoothing
+    geomAlgoLib::Polyhedron smoothedMeshLaplacian = geomAlgoLib::laplacianSmoothing(myMesh, 10);
+    geomAlgoLib::writeOFF(smoothedMeshLaplacian, "../data/smoothedMeshLaplacian.off");
+
+    geomAlgoLib::Polyhedron smoothedMeshGaussian = geomAlgoLib::gaussianSmoothing(myMesh, 10, 1);
+    geomAlgoLib::writeOFF(smoothedMeshGaussian, "../data/smoothedMeshGaussian.off");
 
     // Print a message indicating that the program has finished executing
     std::cout << "The end..." << std::endl;

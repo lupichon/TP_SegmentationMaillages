@@ -1,4 +1,4 @@
-# Install script for directory: /home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages/src/geomAlgoLib
+# Install script for directory: /home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages/src/geomAlgoLib
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -6,6 +6,8 @@ add_library(geomAlgoLib
     measures.hpp
     measures.cpp
     types.hpp
+    smoothing.hpp
+    smoothing.cpp
 )
 
 # Link the library with CGAL
