@@ -1,5 +1,5 @@
 /**
- * @file measure.cpp
+ * @file measures.cpp
  * 
  * This file contains the implementation of functions for mesh segmentation.
  * 

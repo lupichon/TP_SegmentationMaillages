@@ -1,5 +1,5 @@
 /**
- * @file measure.hpp
+ * @file measures.hpp
  * 
  * This file contains the declaration of functions for mesh segmentation.
  * 
