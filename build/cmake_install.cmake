@@ -1,4 +1,4 @@
-# Install script for directory: /home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages
+# Install script for directory: /home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages/build/src/cmake_install.cmake")
+  include("/home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages/build/src/cmake_install.cmake")
 
 endif()
 
@@ -56,5 +56,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/local.isima.fr/lupichon/shared/GeometrieAlgorithmique/TP_SegmentationMaillages/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/lucas/ISIMA/ZZ3/AlgoGeo/TP_SegmentationMaillages/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -104,16 +104,16 @@ int main(int argc, char *argv[]){
     geomAlgoLib::writeOFF(smoothedMeshLaplacian, "../data/smoothedMeshLaplacian.off");
 
     // Generate a smoothed mesh with the Gaussian method
-    geomAlgoLib::Polyhedron smoothedMeshGaussian = geomAlgoLib::gaussianSmoothing(myMesh, 10, 1);
+    geomAlgoLib::Polyhedron smoothedMeshGaussian = geomAlgoLib::gaussianSmoothing(myMesh, 50, 0.1);
     geomAlgoLib::writeOFF(smoothedMeshGaussian, "../data/smoothedMeshGaussian.off");
 
     //Generate a smoothed mesh with the taubin method
-    geomAlgoLib::Polyhedron smoothedMeshTaubin = geomAlgoLib::taubinSmoothing(myMesh, 10, 0.33, -0.34);
+    geomAlgoLib::Polyhedron smoothedMeshTaubin = geomAlgoLib::taubinSmoothing(myMesh, 100, 0.33, -0.34);
     geomAlgoLib::writeOFF(smoothedMeshTaubin, "../data/smoothedMeshTaupin.off");
 
     // Generate a deformed mesh with the Free Form Deformation Methode
-    const CGAL::Point_3<geomAlgoLib::Kernel> translation(-3,-3,-3);
-    geomAlgoLib::Polyhedron freeFormMesh = geomAlgoLib::freeFormDeformation(myMesh, translation, 0);
+    const CGAL::Point_3<geomAlgoLib::Kernel> translation(5,0,0);
+    geomAlgoLib::Polyhedron freeFormMesh = geomAlgoLib::freeFormDeformation(myMesh, translation, 6);
     geomAlgoLib::writeOFF(freeFormMesh, "../data/freeFormMesh.off");
 
     // Print a message indicating that the program has finished executing

@@ -17,6 +17,20 @@
 
 namespace geomAlgoLib {
     
+    /**
+     * @brief Applies Laplacian smoothing to a 3D mesh.
+     * 
+     * This function performs Laplacian smoothing over a given number of iterations.
+     * For each vertex in the mesh, its position is updated to the centroid of its neighboring vertices.
+     * The operation is repeated for the specified number of iterations.
+     * 
+     * The original mesh is not modified; instead, a smoothed copy is returned.
+     * 
+     * @param mesh The input 3D mesh to be smoothed.
+     * @param iterations The number of smoothing iterations to perform.
+     * 
+     * @return Polyhedron A new mesh obtained by applying Laplacian smoothing on the input mesh.
+     */
     Polyhedron laplacianSmoothing(const Polyhedron & mesh, unsigned int iterations) 
     {
         Polyhedron smoothed_mesh = mesh; 
@@ -58,6 +72,21 @@ namespace geomAlgoLib {
         return smoothed_mesh;
     }
 
+    /**
+     * @brief Applies Gaussian smoothing to a 3D mesh.
+     * 
+     * This function performs Gaussian smoothing over a given number of iterations. For each vertex, it computes 
+     * the centroid of its neighboring vertices, then moves the vertex towards this centroid by a factor of `lambda`.
+     * The process is repeated for the specified number of iterations.
+     * 
+     * The original mesh remains unchanged; a smoothed copy is returned.
+     * 
+     * @param mesh The input 3D mesh to be smoothed.
+     * @param iterations The number of smoothing iterations to perform.
+     * @param lambda The smoothing factor.
+     * 
+     * @return Polyhedron A new mesh obtained by applying Gaussian smoothing to the input mesh.
+     */
     Polyhedron gaussianSmoothing(const Polyhedron & mesh, unsigned int iterations, double lambda)
     {
         Polyhedron smoothed_mesh = mesh; 
@@ -101,6 +130,22 @@ namespace geomAlgoLib {
         return smoothed_mesh;
     }
 
+/**
+ * @brief Applies Taubin smoothing to a 3D mesh.
+ * 
+ * Each iteration consists of two phases:
+ *  - Phase 1: Move each vertex towards the centroid of its neighbors by a factor `lambda`.
+ *  - Phase 2: Move each vertex away from the centroid by a factor `mu`, reversing some of the shrinkage from phase 1.
+ *
+ * The original mesh is unchanged; a smoothed copy is returned.
+ * 
+ * @param mesh The input 3D mesh to smooth.
+ * @param iterations The number of smoothing iterations to apply.
+ * @param lambda The smoothing factor for the first step.
+ * @param mu The inflation factor for the second step.
+ * 
+ * @return Polyhedron A new mesh resulting from applying Taubin smoothing to the input mesh.
+ */
     Polyhedron taubinSmoothing(const Polyhedron & mesh, unsigned int iterations, double lambda, double mu)
     {
         Polyhedron smoothed_mesh = mesh;
@@ -159,7 +204,7 @@ namespace geomAlgoLib {
                 {
                     centroid = CGAL::Point_3<Kernel>(centroid.x() / num_neighbors, centroid.y() / num_neighbors, centroid.z() / num_neighbors);
                     CGAL::Vector_3<Kernel> delta = centroid - v->point();
-                    final_positions[index] = v->point() - mu * delta;  
+                    final_positions[index] = v->point() + mu * delta;  
                 }
                 else
                 {
@@ -175,6 +220,17 @@ namespace geomAlgoLib {
         return smoothed_mesh;
     }
 
+    /**
+     * @brief Computes the 8 corner points of the Axis-Aligned Bounding Box (AABB) of a mesh.
+     * 
+     * This function calculates the smallest box, aligned with the coordinate axes.
+     * It does so by finding the minimum and maximum x, y, and z coordinates among all vertices of the mesh, then 
+     * constructing the 8 corner points of the resulting box from these extrema.
+     * 
+     * @param mesh The input 3D mesh for which the AABB corners are to be computed.
+     * 
+     * @return std::vector<CGAL::Point_3<Kernel>> A vector containing the 8 corner points of the computed AABB.
+     */
     std::vector<CGAL::Point_3<Kernel>> computeAABBCorner(const Polyhedron & mesh)
     {
         std::vector<CGAL::Point_3<Kernel>> corners(8);
@@ -201,6 +257,20 @@ namespace geomAlgoLib {
         return corners;
     }
 
+    /**
+     * @brief Computes the influence of each vertex of the mesh on the 8 corners of its Axis-Aligned Bounding Box (AABB).
+     * 
+     * For each corner of the AABB, this function computes a relative influence of every vertex of the mesh 
+     * based on the vertex's position within the box. The influence is calculated as a trilinear interpolation weight,
+     * where each weight component (x, y, z) is linearly proportional to the vertex's distance to the bounding box corner.
+     * 
+     * The result is a list of 8 maps (one per corner), each associating a vertex to its influence value for that corner.
+     * 
+     * @param mesh The input 3D mesh whose vertices' influences on the AABB corners are to be computed.
+     * 
+     * @return std::vector<std::map<Polyhedron::Vertex_const_handle, double>> 
+     * A vector of 8 maps, each map associating vertices to their computed influence on one of the 8 corners of the AABB.
+     */
     std::vector<std::map<Polyhedron::Vertex_const_handle, double>> computeInfluences(const Polyhedron& mesh)
     {
         std::vector<CGAL::Point_3<Kernel>> AABBCorners = computeAABBCorner(mesh);
@@ -235,6 +305,23 @@ namespace geomAlgoLib {
         return influences;
     }
 
+    /**
+     * @brief Applies Free-Form Deformation to a mesh by translating one of the corners of its Axis-Aligned Bounding Box.
+     * 
+     * This function modifies the input mesh by translating the specified AABB corner to a target position, 
+     * and deforms the mesh accordingly based on the precomputed influence of each vertex relative to the AABB corners.
+     * 
+     * The deformation applied to each vertex is computed as a weighted sum of displacements from the original AABB corners 
+     * to their translated positions. The weights (influences) are precomputed using trilinear interpolation based on vertex position.
+     * 
+     * The function preserves the original mesh and returns a deformed copy.
+     * 
+     * @param mesh The input 3D mesh to be deformed.
+     * @param translation The target position to which the specified AABB corner should be moved.
+     * @param cornerIndex Index of the AABB corner (0 to 7) to be translated.
+     * 
+     * @return Polyhedron The deformed mesh after applying free-form deformation.
+     */
     Polyhedron freeFormDeformation(Polyhedron& mesh, const CGAL::Point_3<Kernel>& translation, size_t cornerIndex)
     {
         Polyhedron deformedMesh = mesh;
